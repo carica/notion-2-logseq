@@ -1,0 +1,5 @@
+[logseq]
+Directory = PATH_TO_YOUR_LOGSEQ_GRAPH_DIRECTORY
+
+[notion]
+Directory = ./export

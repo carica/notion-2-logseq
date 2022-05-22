@@ -129,4 +129,11 @@ dmypy.json
 .pyre/
 
 # Configuration file
-.ini 
+*.ini
+
+# Default directories
+export
+test
+
+# Mac files
+.DS_Store
