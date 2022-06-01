@@ -4,19 +4,25 @@ from urllib.parse import unquote
 from functools import partial
 import filetype
 import time
-import shlex
+from csv2md.table import Table
 
 def link_replace(cur_dir, matchobj):
   link = matchobj.group(2)
   file = os.path.join(cur_dir, link)
+  res = '[{0}]({1})'.format(matchobj.group(1), link)
   if os.path.isfile(file):
     kind = filetype.guess(file)
-    if kind is not None and kind.mime.startswith('image'): # may add other filetypes later
+    if kind is not None and (kind.mime.startswith('image') or kind.extension == '.pdf'): # may add other filetypes later
       old_filename = os.path.split(link)[1].replace(' ', '_')
       new_filename = '{0}_{1}.{2}'.format(os.path.splitext(old_filename)[0], time.time_ns(), kind.extension)
       os.rename(file, os.path.join(logseq_assets_dir, new_filename))
       link = '../assets/' + new_filename
-  return '[{0}]({1})'.format(matchobj.group(1), link)
+      res = '![{0}]({1})'.format(matchobj.group(1), link)
+    elif file.endswith('.csv'): # filetype module cannot recognize csv file 
+      with open(file, 'rt') as f:
+        table = Table.parse_csv(f)
+        res = table.markdown().replace('\n', '\n\t')
+  return res
 
 def notion_walk(notion_dir):
   for filename in os.scandir(notion_dir):
@@ -45,7 +51,8 @@ def notion_walk(notion_dir):
             if md_link_pattern.search(line_trim):
               line_trim = unquote(line_trim) # unquote urlencoded characters
               line_trim = md_link_pattern.sub(partial(link_replace, notion_dir), line_trim) # replace link text & move png to assets
-            if line_trim[0] == '-': # fix indent if this line is a unordered list
+              line_trim = line_trim.replace('!!', '!') ## sometimes notion images come with ! sometimes not
+            if line_trim[0] == '-': # fix indent if this line is an unordered list
               output_file.write('\t{0}\n'.format(line_trim))
             else: 
               output_file.write('\t- {0}\n'.format(line_trim))
