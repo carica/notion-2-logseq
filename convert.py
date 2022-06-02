@@ -5,6 +5,7 @@ from functools import partial
 import filetype
 import time
 from csv2md.table import Table
+import shutil
 
 def link_replace(cur_dir, matchobj):
   link = matchobj.group(2)
@@ -12,16 +13,22 @@ def link_replace(cur_dir, matchobj):
   res = '[{0}]({1})'.format(matchobj.group(1), link)
   if os.path.isfile(file):
     kind = filetype.guess(file)
-    if kind is not None and (kind.mime.startswith('image') or kind.extension == '.pdf'): # may add other filetypes later
-      old_filename = os.path.split(link)[1].replace(' ', '_')
+    old_filename = os.path.split(link)[1].replace(' ', '_')
+    if kind is not None and (kind.mime.startswith('image') or kind.extension == '.pdf' ): # guess extension of image as notion export may not come with one. link to pdf files requie a !
       new_filename = '{0}_{1}.{2}'.format(os.path.splitext(old_filename)[0], time.time_ns(), kind.extension)
-      os.rename(file, os.path.join(logseq_assets_dir, new_filename))
+      shutil.move(file, os.path.join(logseq_assets_dir, new_filename))
       link = '../assets/' + new_filename
       res = '![{0}]({1})'.format(matchobj.group(1), link)
     elif file.endswith('.csv'): # filetype module cannot recognize csv file 
       with open(file, 'rt') as f:
         table = Table.parse_csv(f)
         res = table.markdown().replace('\n', '\n\t')
+    else: # otherwise copy to assets directory and make a link to it
+      filename_tuple = os.path.splitext(old_filename)
+      new_filename = '{0}_{1}.{2}'.format(filename_tuple[0], time.time_ns(), filename_tuple[1])
+      shutil.move(file, os.path.join(logseq_assets_dir, new_filename))
+      link = '../assets/' + new_filename
+      res = '[]()'.format(matchobj.group(1), link)
   return res
 
 def notion_walk(notion_dir):
