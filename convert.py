@@ -38,7 +38,7 @@ def notion_walk(notion_dir):
       csv_file = filename.path + '.csv' # there should be a csv file with corresponding name or it is not a page 
       if os.path.exists(csv_file):
         with open(csv_file, newline='\n') as csvfile:
-          if 'Name,Created,Tags,' in csvfile.readline(): # iterate inner page directory
+          if 'Name,Created' in csvfile.readline(): # iterate inner page directory
             notion_walk(filename.path) # skip databases, images directories etc
     elif filename.is_file() and filename.name.endswith('.md'):
       with open(filename.path, 'rt', encoding='utf-8') as input_file:
@@ -78,6 +78,7 @@ def notion_walk(notion_dir):
             else: 
               output_file.write('\t- {0}\n'.format(line_trim))
     else:
+      print('{0} is not a dir nor a file'.format(filename))
       continue
 
 if __name__ == '__main__':
