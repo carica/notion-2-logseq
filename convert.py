@@ -25,6 +25,7 @@ def link_replace(cur_dir, matchobj):
   return res
 
 def notion_walk(notion_dir):
+  dir_tag = os.path.basename(notion_dir).split()[0]
   for filename in os.scandir(notion_dir):
     if filename.is_dir():
       csv_file = filename.path + '.csv' # there should be a csv file with corresponding name or it is not a page 
@@ -39,7 +40,7 @@ def notion_walk(notion_dir):
         logseq_block_title = lines[0][2:].strip() # use first line as logseq block title
         logseq_filename = parse(lines[2][9:].strip()).strftime('%Y_%m_%d') + '.md' # use created at date as logseq filename 
         with open(os.path.join(logseq_journals_dir, logseq_filename), 'at', encoding='utf-8') as output_file: # always append to, or create logseq file
-          output_file.write('- {0}\n'.format(logseq_block_title))
+          output_file.write('- {0} #{1}\n'.format(logseq_block_title, dir_tag))
           headless_input = lines[4:] # skip first 4 lines
           if lines[3].startswith('URL'): # with URL tag, there will be an additional line 
             headless_input = lines[5:]
